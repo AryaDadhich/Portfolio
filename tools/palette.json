@@ -1,0 +1,25 @@
+{
+  "dominant": [
+    "#88afe3",
+    "#9bc3f4",
+    "#bed6f7",
+    "#7090ba",
+    "#8e908d",
+    "#61728a",
+    "#aea46f",
+    "#bcb294",
+    "#8e855a",
+    "#3a3c46"
+  ],
+  "palette": {
+    "paper": "#f9f8f3",
+    "paperDeep": "#f4f2e9",
+    "tintSky": "#d5e0ee",
+    "tintMeadow": "#e4e9d6",
+    "tintSand": "#efebd4",
+    "accent": "#a5bad5",
+    "accentInk": "#345174",
+    "ink": "#353222",
+    "inkSoft": "#676351"
+  }
+}
