@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trekking — Arya Dadhich</title>
+  <meta name="description" content="High-altitude trekking: photos and expeditions by Arya Dadhich.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Trekking — Arya Dadhich">
+  <meta property="og:description" content="Photos and a list of high-altitude expeditions.">
+  <meta property="og:image" content="assets/og.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#f9f8f3">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="inner">
+  <header class="site"></header>
+  <main>
+    <p class="small"><a href="about.html">← About me</a></p>
+    <h1>Trekking</h1>
+    <p class="lede" id="intro"></p>
+    <section aria-labelledby="exp-h">
+      <h2 id="exp-h">Expeditions</h2>
+      <table class="exp"><thead><tr><th scope="col">Expedition</th><th scope="col">Region</th><th scope="col">Altitude</th><th scope="col">Year</th></tr></thead><tbody id="exp"></tbody></table>
+    </section>
+    <section aria-labelledby="ph-h">
+      <h2 id="ph-h">Photos</h2>
+      <div class="gallery" id="gallery"></div>
+    </section>
+  </main>
+  <footer class="site"></footer>
+  <script type="module">
+    import { content as C, initPage, txt, esc, decorate } from './js/common.js';
+    const companion = initPage('trekking');
+    const T = C.trekking;
+    document.querySelector('#intro').innerHTML = txt(T.intro);
+    document.querySelector('#exp').innerHTML = T.expeditions.map(e => `<tr><td>${txt(e.name)}</td><td>${txt(e.where)}</td><td>${txt(e.altitude)}</td><td>${txt(e.when)}</td></tr>`).join('');
+    document.querySelector('#gallery').innerHTML = T.photos.map((p, i) => `<figure data-sketch="rect" data-fill="paperDeep" data-seed="${60 + i}"><img src="${esc(p.src)}" alt="${esc(p.alt)}" loading="lazy"><figcaption>${txt(p.caption)}</figcaption></figure>`).join('');
+    decorate();
+    companion.accessory('pack');
+  </script>
+</body>
+</html>

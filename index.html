@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en" class="home-root">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Arya Dadhich — Data &amp; ML Engineer</title>
+  <meta name="description" content="Portfolio of Arya Dadhich, a data engineer and ML practitioner: data pipelines on AWS, computer vision, and analytical models, with interactive project demos.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Arya Dadhich — Data &amp; ML Engineer">
+  <meta property="og:description" content="From one dot to a trail: data pipelines, computer vision and analytical models, with interactive demos.">
+  <!-- og:image should be an absolute URL once deployed, e.g. https://USERNAME.github.io/REPO/assets/og.jpg -->
+  <meta property="og:image" content="assets/og.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#f9f8f3">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preload" as="image" href="assets/portrait.jpg">
+</head>
+<body class="home">
+  <p class="wordmark">Arya Dadhich</p>
+  <button id="skip" type="button">skip intro</button>
+
+  <main id="scene">
+    <canvas id="stage" aria-hidden="true"></canvas>
+    <p id="caption"></p>
+    <p id="hint"><span></span></p>
+    <section id="finale" aria-label="Introduction and site sections"></section>
+    <p id="sr" class="vh" aria-live="polite"></p>
+  </main>
+
+  <div class="zoomctl" role="group" aria-label="Zoom through the intro">
+    <button class="zb" id="zout" type="button" aria-label="Zoom out (previous stage)" data-sketch="circle"></button>
+    <ol class="stages" id="stages"></ol>
+    <button class="zb" id="zin" type="button" aria-label="Zoom in (next stage)" data-sketch="circle"></button>
+  </div>
+
+  <noscript>
+    <div style="position:fixed;inset:0;display:grid;place-items:center;text-align:center;padding:24px;background:#f9f8f3">
+      <div>
+        <h1>Arya Dadhich</h1>
+        <p>Data engineer and ML practitioner. This site needs JavaScript for its content.</p>
+      </div>
+    </div>
+  </noscript>
+  <script type="module" src="js/home.js"></script>
+</body>
+</html>
