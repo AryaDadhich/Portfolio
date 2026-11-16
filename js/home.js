@@ -264,7 +264,7 @@ function draw(now) {
 }
 
 // ── state: t springs towards the target stage ───────────────────────────────
-let t = 0, vel = 0, target = 0, dirty = true, fadeT = 0, typing = 0, typedDone = false, lastStage = -1, hopT = 0, hopI = 0, autoT = 0;
+let t = 0, vel = 0, target = 0, dirty = true, fadeT = 0, typing = 0, typedDone = false, lastStage = -1, hopT = 0, hopI = 0;
 
 function setStage(n, { instant = false } = {}) {
   n = clamp(Math.round(n), 0, LAST);
@@ -277,7 +277,7 @@ function setStage(n, { instant = false } = {}) {
   }
   ui();
 }
-const step = d => { stopAuto(); setStage(target + d); };
+const step = d => setStage(target + d);
 
 // where the companion belongs at each stage (it never follows the cursor)
 function companionSpot() {
@@ -311,15 +311,10 @@ function ui() {
   if (target === LAST) { try { sessionStorage.setItem('introSeen', '1'); } catch {} }
 }
 
-// replay: back to the first stage, then the zoom plays by itself until any input takes over
-function stopAuto() { clearInterval(autoT); autoT = 0; }
+// replay: back to the first stage, then wait for the visitor to zoom in again
 function replay() {
-  stopAuto();
   scene.classList.add('fading'); clearTimeout(fadeT);
-  fadeT = setTimeout(() => {
-    setStage(0, { instant: true }); scene.classList.remove('fading');
-    autoT = setInterval(() => { if (target >= LAST) return stopAuto(); setStage(target + 1); }, 2300);
-  }, 260);
+  fadeT = setTimeout(() => { setStage(0, { instant: true }); scene.classList.remove('fading'); }, 260);
 }
 
 function typeHeadline() {
@@ -424,7 +419,7 @@ addEventListener('touchend', e => {
 // clicking the name in the header goes straight to the final screen
 document.querySelector('header.site .name').addEventListener('click', e => {
   if (e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-  e.preventDefault(); stopAuto(); setStage(LAST);
+  e.preventDefault(); setStage(LAST);
 });
 $('#replay').addEventListener('click', replay);
 
