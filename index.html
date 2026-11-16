@@ -15,35 +15,27 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
+  <script>(function(){var t;try{t=localStorage.getItem('theme')}catch(e){}if(t!=='dark'&&t!=='light')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t})()</script>
+  <link rel="stylesheet" href="css/style.css?v=3">
   <link rel="preload" as="image" href="assets/portrait.jpg">
 </head>
 <body class="home">
-  <p class="wordmark">Arya Dadhich</p>
-  <button id="skip" type="button">skip intro</button>
+  <header class="site"></header>
 
   <main id="scene">
     <canvas id="stage" aria-hidden="true"></canvas>
-    <p id="caption"></p>
-    <p id="hint"><span></span></p>
     <section id="finale" aria-label="Introduction and site sections"></section>
     <p id="sr" class="vh" aria-live="polite"></p>
   </main>
 
-  <div class="zoomctl" role="group" aria-label="Zoom through the intro">
-    <button class="zb" id="zout" type="button" aria-label="Zoom out (previous stage)" data-sketch="circle"></button>
-    <ol class="stages" id="stages"></ol>
-    <button class="zb" id="zin" type="button" aria-label="Zoom in (next stage)" data-sketch="circle"></button>
-  </div>
-
   <noscript>
-    <div style="position:fixed;inset:0;display:grid;place-items:center;text-align:center;padding:24px;background:#f9f8f3">
+    <div style="position:fixed;inset:0;display:grid;place-items:center;text-align:center;padding:24px">
       <div>
         <h1>Arya Dadhich</h1>
         <p>Data engineer and ML practitioner. This site needs JavaScript for its content.</p>
       </div>
     </div>
   </noscript>
-  <script type="module" src="js/home.js"></script>
+  <script type="module" src="js/home.js?v=3"></script>
 </body>
 </html>

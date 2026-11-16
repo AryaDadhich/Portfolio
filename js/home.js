@@ -1,14 +1,14 @@
 // home.js — "From one dot to me": one full-screen scene, zoomed through 5 stages.
 // The drawing is a pure function of a single number `t` (0…4) that springs
 // towards the target stage, so input can interrupt it at any time.
-import { content as C, initPage, reduced, esc, icon, decorate, tint } from './common.js';
+import { content as C, initPage, reduced, esc, icon, decorate, tint, isPlaceholder } from './common.js';
 import { rng } from './sketch.js';
 
 const companion = initPage('index');
 const P = C.person;
 const $ = s => document.querySelector(s);
 const scene = $('#scene'), canvas = $('#stage'), ctx = canvas.getContext('2d');
-const finale = $('#finale'), hint = $('#hint'), caption = $('#caption'), skip = $('#skip'), sr = $('#sr');
+const finale = $('#finale'), sr = $('#sr');
 const LAST = 4;
 const NAMES = ['One dot', 'Data points', 'Neural network', 'Mountain trail', P.name];
 
@@ -26,12 +26,10 @@ finale.innerHTML = `
         <span class="b-dot" data-sketch="circle" data-fill="${esc(b.tint)}" data-seed="${20 + i * 3}" data-wobble>${icon(b.icon, 24)}</span>
         <span class="b-label">${esc(b.label)}</span></a></li>`).join('')}
     </ul></nav>
+    <button class="replay" type="button" id="replay" aria-label="Replay intro">
+      <span class="r-dot" data-sketch="circle" data-wobble>${icon('replay', 18)}</span><span class="r-label" aria-hidden="true">Replay intro</span>
+    </button>
   </div>`;
-hint.firstElementChild.textContent = C.home.hint;
-$('#zout').insertAdjacentHTML('beforeend', icon('minus', 20));
-$('#zin').insertAdjacentHTML('beforeend', icon('plus', 20));
-const stagesEl = $('#stages');
-stagesEl.innerHTML = NAMES.map((n, i) => `<li><button type="button" data-stage="${i}" aria-label="Stage ${i + 1} of ${LAST + 1}: ${esc(n)}"></button></li>`).join('');
 decorate();
 const typed = finale.querySelector('.typed'), rest = finale.querySelector('.rest');
 
@@ -72,6 +70,43 @@ const MAIN = [[-560, 330], [-330, 60], [-250, 120], [-90, -90], [-30, -40], SUMM
 const FAR = [[-640, 330], [-480, 0], [-400, 90], [-340, 40], [-200, 210], [200, 210], [360, -10], [430, -70], [520, 60], [640, 330]];
 const SNOW = [[92, -196], [118, -214], [146, -190], [176, -216], [206, -186]];
 
+// ── interactive stages: content attached to dots, nodes and trail markers ───
+// Nothing here is laid out by hand: projects, stories and milestones come from
+// content.js (projects, beyond, timeline) and are assigned to existing elements.
+const ABOUT_NODE = 10;                                    // centre of the network, drawn slightly larger
+const STORY_NODES = [1, 5, 15, 18, 8, 12, 4, 6, 14, 16, 0, 2, 3, 7, 9, 11, 13, 17, 19];
+const shortTitle = s => s.split(/ — | for | with /)[0];
+const hsProjects = C.projects.slice(0, N);
+const hsStories = (C.home.stories || C.beyond).filter(b => !isPlaceholder(b.title)).slice(0, STORY_NODES.length);
+const hsMiles = C.timeline.slice(0, N - 2);
+// the last milestone (the current role) is the summit; the earlier ones sit lower, below the trekker
+const MILE_NODES = hsMiles.map((_, i, a) => (i === a.length - 1 ? N - 1 : a.length === 2 ? 2 : Math.round(2 + (11 * i) / (a.length - 2))));
+const HOT = [
+  ...hsProjects.map((p, i) => ({ stage: 1, node: Math.min(N - 1, Math.floor(((i + 0.5) / hsProjects.length) * N)), kind: 'Project', label: shortTitle(p.title), href: `projects.html#${p.id}`, tint: 'tintSky' })),
+  ...hsStories.map((s, i) => ({ stage: 2, node: STORY_NODES[i], kind: 'Story', label: s.title, href: s.href && !isPlaceholder(s.href) ? s.href : 'about.html#beyond', tint: s.tint || 'tintMeadow' })),
+  { stage: 2, node: ABOUT_NODE, kind: '', label: C.home.aboutNodeLabel || 'About me', href: 'about.html', tint: 'tintMeadow', big: true },
+  ...hsMiles.map((m, i) => ({ stage: 3, node: MILE_NODES[i], kind: 'Milestone', label: `${m.org} · ${m.title} · ${m.when}`, href: `experience.html#stop-${i}`, tint: m.tint || 'tintSand' })),
+];
+const hot = document.createElement('nav');
+hot.id = 'hotspots';
+hot.setAttribute('aria-label', 'Shortcuts in this drawing');
+hot.innerHTML = HOT.map(h => {
+  const ext = /^https?:/.test(h.href);
+  return `<a class="hs s${h.stage}${h.big ? ' big' : ''}" href="${esc(h.href)}" ${ext ? 'target="_blank" rel="noopener"' : `data-zoom="in" data-tint="${esc(h.tint)}"`} aria-label="${esc((h.kind ? h.kind + ': ' : '') + h.label)}" inert><span class="hs-label" aria-hidden="true">${esc(h.label)}</span></a>`;
+}).join('');
+scene.insertBefore(hot, finale);
+const hsEls = [...hot.children];
+let hotActive = -1, lastPointer = 'mouse';
+hot.addEventListener('pointerdown', e => { lastPointer = e.pointerType; });
+// touch has no hover: the first tap shows the label, the second opens it
+hot.addEventListener('click', e => {
+  const a = e.target.closest('.hs');
+  if (!a || lastPointer !== 'touch' || a.classList.contains('armed')) return;
+  e.preventDefault();
+  hsEls.forEach(x => x.classList.remove('armed'));
+  a.classList.add('armed');
+});
+
 // ── canvas ──────────────────────────────────────────────────────────────────
 let w = 0, h = 0, ux = 1, uy = 1, u = 1, cx = 0, cy = 0, col = {};
 const X = x => cx + x * ux, Y = y => cy + y * uy;
@@ -83,7 +118,16 @@ function resize() {
   ux = (Math.min(w, 1150) / 1000) * 0.92; uy = (Math.min(h, 860) / 1000) * 0.92;
   u = Math.max(0.55, Math.min(ux, uy)); cx = w / 2; cy = h * 0.5;
   col = { ink: tint('ink'), paper: tint('paper'), sky: tint('tintSky'), meadow: tint('tintMeadow'), sand: tint('tintSand'), accent: tint('accent') };
-  dirty = true;
+  dirty = true; hotActive = -1;
+  if (lastStage !== -1) placeCompanion(1);
+}
+// small hand-drawn star, used for the milestone markers on the trail
+function wstar(x, y, r, seed) {
+  for (let k = 0; k < 10; k++) {
+    const a = -Math.PI / 2 + (k * Math.PI) / 5 + O(seed + k) * 0.09, rr = (k % 2 ? r * 0.46 : r) * (1 + O(seed + k + 20) * 0.07);
+    k ? ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr) : ctx.moveTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+  }
+  ctx.closePath();
 }
 
 // slightly bowed stroke; p < 1 draws only the first part of it
@@ -196,16 +240,21 @@ function draw(now) {
     const r = (t <= 1 ? lerp(3, 5, clamp((t - 0.45) / 0.55)) : lerp(t <= 2 ? 5 : 3.4, 10.500, net)) * u;
     const layerFill = [col.sand, col.meadow, col.sky, col.meadow, col.accent];
     pts.forEach((p, i) => {
-      ctx.beginPath(); wcircle(p[0], p[1], r, 300 + i * 9);
+      ctx.beginPath(); wcircle(p[0], p[1], i === ABOUT_NODE ? r * (1 + 0.4 * net) : r, 300 + i * 9);
       A(clamp((t - 0.45) * 5) * (1 - net)); ctx.fillStyle = col.ink; ctx.fill();
       if (net > 0.01) {
         A(net); ctx.fillStyle = col.paper; ctx.fill(); ctx.fillStyle = layerFill[LAYER_OF[i]]; ctx.fill();
         ctx.lineWidth = 1.2 * lw; ctx.stroke();
       }
     });
+    // milestone stars along the trail
+    if (t > 2.5) {
+      A(clamp((t - 2.5) / 0.4)); ctx.lineWidth = 1.2 * lw; ctx.fillStyle = col.sand;
+      MILE_NODES.forEach((n, i) => { ctx.beginPath(); wstar(pts[n][0], pts[n][1], Math.max(7, 9 * u), 400 + i * 31); ctx.fill(); ctx.stroke(); });
+    }
     // the trekker walks up the trail
     if (t > 2.4) {
-      const s = t < 3 ? 0.8 * ease(clamp((t - 2.35) / 0.65)) : 0.8 + 0.2 * clamp((t - 3) / 0.45);
+      const s = t < 3 ? 0.92 * ease(clamp((t - 2.35) / 0.65)) : 0.92 + 0.08 * clamp((t - 3) / 0.45);   // rests just below the summit
       const f = s * (N - 1), i = Math.min(N - 2, Math.floor(f)), k = f - i;
       A(clamp((t - 2.4) / 0.25)); ctx.lineWidth = 1.25 * lw;
       trekker(lerp(pts[i][0], pts[i + 1][0], k), lerp(pts[i][1], pts[i + 1][1], k), now);
@@ -215,7 +264,7 @@ function draw(now) {
 }
 
 // ── state: t springs towards the target stage ───────────────────────────────
-let t = 0, vel = 0, target = 0, dirty = true, fadeT = 0, typing = 0, typedDone = false, lastStage = -1;
+let t = 0, vel = 0, target = 0, dirty = true, fadeT = 0, typing = 0, typedDone = false, lastStage = -1, hopT = 0, hopI = 0, autoT = 0;
 
 function setStage(n, { instant = false } = {}) {
   n = clamp(Math.round(n), 0, LAST);
@@ -228,26 +277,49 @@ function setStage(n, { instant = false } = {}) {
   }
   ui();
 }
-const step = d => setStage(target + d);
+const step = d => { stopAuto(); setStage(target + d); };
+
+// where the companion belongs at each stage (it never follows the cursor)
+function companionSpot() {
+  if (target === 0) return [cx + 16 + 44 * u, cy + 30];                       // beside the dot
+  if (target === 1 || target === 2) {                                        // hops between project dots / nodes
+    const list = HOT.filter(h => h.stage === target);
+    if (!list.length) return null;
+    const p = nodePos(list[hopI % list.length].node, target);
+    return [p[0] + 19, p[1] + 13];
+  }
+  if (target === 3) {                                                        // stands on the trail, near the top
+    const f = 0.78 * (N - 1), i = Math.floor(f), k = f - i, a = nodePos(i, 3), b = nodePos(i + 1, 3);
+    return [lerp(a[0], b[0], k), lerp(a[1], b[1], k)];
+  }
+  return null;                                                               // final screen: its resting corner
+}
+function placeCompanion(dur) {
+  const p = companionSpot();
+  if (p) companion.moveTo(p[0], p[1], { dur, arc: 14 }); else companion.rest({ dur });
+}
 
 function ui() {
-  stagesEl.querySelectorAll('button').forEach((b, i) => (i === target ? b.setAttribute('aria-current', 'step') : b.removeAttribute('aria-current')));
-  $('#zout').disabled = target === 0; $('#zin').disabled = target === LAST;
-  skip.textContent = target === LAST ? 'replay intro' : 'skip intro';
   finale.inert = target !== LAST;
-  hint.style.opacity = target === 0 ? 1 : 0;
-  const cap = C.home.captions[target] || '';
-  if (cap) caption.textContent = cap;
-  caption.style.opacity = cap ? 1 : 0;
   if (target !== lastStage) {
     sr.textContent = `Stage ${target + 1} of ${LAST + 1}: ${NAMES[target]}`;
-    if (lastStage !== -1) companion.hop();
     lastStage = target;
+    hopI = 0; clearInterval(hopT);
+    placeCompanion(1000);
+    if ((target === 1 || target === 2) && !reduced.matches) hopT = setInterval(() => { hopI++; placeCompanion(650); }, 2600);
   }
   if (target === LAST) { try { sessionStorage.setItem('introSeen', '1'); } catch {} }
-  // the companion sits beside the dot at the start, then follows the visitor
-  if (target === 0) companion.park(() => ({ x: cx + 16 + 44 * u, y: cy + 30 }));
-  else companion.release();
+}
+
+// replay: back to the first stage, then the zoom plays by itself until any input takes over
+function stopAuto() { clearInterval(autoT); autoT = 0; }
+function replay() {
+  stopAuto();
+  scene.classList.add('fading'); clearTimeout(fadeT);
+  fadeT = setTimeout(() => {
+    setStage(0, { instant: true }); scene.classList.remove('fading');
+    autoT = setInterval(() => { if (target >= LAST) return stopAuto(); setStage(target + 1); }, 2300);
+  }, 260);
 }
 
 function typeHeadline() {
@@ -271,7 +343,19 @@ function dom() {
   const live = target === LAST && t > 3.75;
   finale.classList.toggle('live', live);
   if (live) typeHeadline(); else if (t < 3.3 && (typedDone || typing)) resetHeadline();
-  document.querySelector('.wordmark').style.opacity = 1 - p;
+  // hotspots are live only while their stage is at rest, so a transition can always be interrupted
+  const active = target >= 1 && target <= 3 && Math.abs(t - target) < 0.04 ? target : 0;
+  if (active !== hotActive) {
+    hotActive = active;
+    hsEls.forEach((el, i) => {
+      const h = HOT[i], on = h.stage === active;
+      el.inert = !on; el.classList.toggle('on', on);
+      if (!on) return el.classList.remove('armed');
+      const pos = nodePos(h.node, h.stage);
+      el.style.left = pos[0] + 'px'; el.style.top = pos[1] + 'px';
+      el.classList.toggle('edge-l', pos[0] < w * 0.3); el.classList.toggle('edge-r', pos[0] > w * 0.7);
+    });
+  }
 }
 
 let last = performance.now();
@@ -337,13 +421,16 @@ addEventListener('touchend', e => {
   ts = null; if (!e.touches.length) pinch = 0;
 }, { passive: true });
 
-$('#zin').addEventListener('click', () => step(1));
-$('#zout').addEventListener('click', () => step(-1));
-stagesEl.addEventListener('click', e => { const b = e.target.closest('button'); if (b) setStage(+b.dataset.stage); });
-skip.addEventListener('click', () => setStage(target === LAST ? 0 : LAST));
+// clicking the name in the header goes straight to the final screen
+document.querySelector('header.site .name').addEventListener('click', e => {
+  if (e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  e.preventDefault(); stopAuto(); setStage(LAST);
+});
+$('#replay').addEventListener('click', replay);
 
 // ── start ───────────────────────────────────────────────────────────────────
 addEventListener('resize', resize);
+addEventListener('themechange', resize);      // re-read the palette for the canvas
 resize();
 let seen = false;
 try { seen = sessionStorage.getItem('introSeen') === '1'; } catch {}
@@ -353,4 +440,4 @@ document.fonts?.ready.then(() => { dirty = true; });
 requestAnimationFrame(tick);
 
 // for tests / debugging in the console
-window.__home = { setStage, get stage() { return target; }, get t() { return t; } };
+window.__home = { setStage, render() { draw(performance.now()); dom(); }, get stage() { return target; }, get t() { return t; } };

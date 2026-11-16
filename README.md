@@ -22,7 +22,7 @@ Everything you would want to change is in **`content.js`**: text, links, project
 - To add a "life beyond code" card, copy one line in the `beyond` list.
 - To add trek photos, put the image in `assets/` and add a line to `trekking.photos`.
 - To replace the CV, overwrite `assets/Arya_Dadhich_CV.pdf`.
-- Colours: edit `palette` in `content.js`. (`css/style.css` has the same values as a fallback for the first paint; keep them in sync if you change the palette.)
+- Colours: edit `palette` (light) and `paletteDark` (dark) in `content.js`. (`css/style.css` has the same values as a fallback for the first paint; keep them in sync if you change the palette.)
 
 ## Structure
 
@@ -39,7 +39,7 @@ js/companion.js     The small walking companion
 js/common.js        Header/footer, page transitions, shared helpers
 js/home.js          Home scene
 js/demos/*.js       One module per project demo (loaded on demand)
-assets/             Images, CV PDF, fallback pose sequence
+assets/             Images and the CV PDF
 tools/              Local server and the scripts that generated the palette and assets
 ```
 
@@ -57,7 +57,16 @@ node extract-palette.mjs
 
 It prints the palette (copy it into `content.js`) and rewrites `assets/portrait.jpg`, `assets/trek-01.jpg` and `assets/og.jpg` from `tools/source-photo.jpg`.
 
-`node tools/make-pose-sequence.mjs` regenerates the fallback landmark sequence used when the camera is unavailable.
+
+## Deploy to Vercel
+
+There is no build step: the files in this folder are exactly what gets served.
+
+```bash
+npx vercel --prod
+```
+
+Run it from this folder (it asks you to log in the first time, and to link the existing project). If the project is connected to a Git repository instead, commit and push this folder's contents and Vercel deploys them. `vercel.json` tells browsers to re-check every file, so a new deploy is never hidden by a stale cache. After deploying, hard-refresh once (Ctrl+Shift+R).
 
 ## Deploy to GitHub Pages
 

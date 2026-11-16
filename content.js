@@ -26,6 +26,18 @@ export default {
     ink: '#353222',
     inkSoft: '#676351',
   },
+  // Dark theme: the same hues, as muted dark tints on a deep warm background, with light ink.
+  paletteDark: {
+    paper: '#1e1b15',
+    paperDeep: '#26221a',
+    tintSky: '#2b3642',
+    tintMeadow: '#30372a',
+    tintSand: '#3a3425',
+    accent: '#46597a',
+    accentInk: '#a9c0de',
+    ink: '#ece7d8',
+    inkSoft: '#b5af9c',
+  },
 
   person: {
     name: 'Arya Dadhich',
@@ -46,9 +58,12 @@ export default {
 
   // ── Home ───────────────────────────────────────────────────────────────────
   home: {
-    hint: 'scroll, swipe or press ↓ to zoom in',
-    // One short caption per intro stage (the final stage shows the portrait instead).
-    captions: ['It starts with one dot.', 'One dot becomes data.', 'Data becomes a model.', 'And the work becomes a trail.'],
+    // The home screen has no text of its own. The intro stages are shortcuts, filled from the lists further down:
+    //   scatter dots   → `projects`  (one dot per project)
+    //   network nodes  → `beyond`    (one node per card; placeholder titles are skipped)
+    //   trail stars    → `timeline`  (oldest at the bottom, the last entry at the summit)
+    // Add items to those lists and they appear here automatically (up to 20 / 19 / 18).
+    aboutNodeLabel: 'About me',
     bullets: [
       { label: 'Projects', href: 'projects.html', tint: 'tintSky', icon: 'nodes' },
       { label: 'About me', href: 'about.html', tint: 'tintMeadow', icon: 'person' },
@@ -64,7 +79,7 @@ export default {
   ],
 
   // ── Projects ───────────────────────────────────────────────────────────────
-  // demo.module is a file in js/demos/. demo.config is passed straight to it.
+  // A project may have a demo (demo.module is a file in js/demos/) or none at all: just leave `demo` out.
   projects: [
     {
       id: 'gesture',
@@ -79,19 +94,18 @@ export default {
       ],
       tags: ['Python', 'OpenCV', 'MediaPipe', 'PyAutoGUI', 'MySQL', 'MongoDB', 'Cassandra', 'Oracle GCP'],
       links: [{ label: 'GitHub', href: '[ADD: GitHub repo URL]' }],
+      // demo is optional. title = the small heading, note = a disclaimer (shown in brackets, small and muted).
       demo: {
         module: 'pose',
-        type: 'Live webcam demo',
-        why: 'The project is real-time pose control, so the honest demo is your own camera driving a character. It runs on MediaPipe Pose Landmarker in your browser.',
+        title: 'Move, and it moves with you',
+        note: 'Runs fully in your browser. No video is uploaded or stored.',
         config: {
           // Pinned versions; loaded only after "Try it" is pressed.
           visionBundle: 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs',
           wasmPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm',
           model: 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',
-          fallbackSequence: 'assets/pose-sequence.json',
           video: { width: 480, height: 360 },
           smoothing: 0.45, // 0 = raw, closer to 1 = smoother but laggier
-          privacy: 'Runs fully in your browser. No video is uploaded or stored.',
         },
       },
     },
@@ -111,12 +125,9 @@ export default {
       links: [],
       demo: {
         module: 'shelf',
-        type: 'Interactive demo on sample data',
-        why: 'The real model and shelf images are proprietary, so this uses an illustrative shelf with pre-computed detections to show the idea: detect facings, then turn them into share of shelf.',
-        config: {
-          brands: ['Own brand', 'Competitor A', 'Competitor B'],
-          note: 'Illustrative shelf and scores, not Marico data. The production model identified 50+ SKUs.',
-        },
+        title: 'Spot the products on a shelf',
+        note: 'Illustrative shelf, not Marico data.',
+        config: { brands: ['Own brand', 'Competitor A', 'Competitor B'] },
       },
     },
     {
@@ -132,15 +143,6 @@ export default {
       ],
       tags: ['Python', 'Scikit-learn', 'Linear Regression', 'Multilevel Regression', 'Feature Elimination'],
       links: [],
-      demo: {
-        module: 'regression',
-        type: 'Interactive demo on sample data',
-        why: 'Regression is easiest to understand by moving a slider. The fit is computed live in your browser on synthetic data, comparing one pooled line with a line per group.',
-        config: {
-          groups: ['Channel A', 'Channel B', 'Channel C'],
-          note: 'Synthetic data for illustration. Not actual sales figures.',
-        },
-      },
     },
     {
       id: 'recommender',
@@ -157,11 +159,9 @@ export default {
       links: [{ label: 'GitHub', href: '[ADD: GitHub repo URL]' }],
       demo: {
         module: 'recommender',
-        type: 'Interactive demo on sample data',
-        why: 'Cold start is a "new user" problem, so you play the new user: pick a few dialogue styles and watch the ranking change, then blend content-based and collaborative scores.',
-        config: {
-          note: 'Small illustrative catalogue and synthetic ratings, not the original dataset.',
-        },
+        title: 'Pick what you like',
+        note: 'Small illustrative catalogue and synthetic ratings, not the original dataset.',
+        config: {},
       },
     },
     {
@@ -177,14 +177,6 @@ export default {
       ],
       tags: ['MATLAB', 'Image Processing Toolbox', 'Segmentation', 'Classification'],
       links: [{ label: 'GitHub', href: '[ADD: GitHub repo URL]' }],
-      demo: {
-        module: 'pipeline',
-        type: 'Clickable pipeline on a synthetic image',
-        why: 'Medical images cannot be bundled, and the original is MATLAB. Each step of the pipeline is re-implemented in a few lines of JavaScript and run on a synthetic image so you can see what every stage does.',
-        config: {
-          note: 'Synthetic test image generated in your browser. No patient data.',
-        },
-      },
     },
   ],
 
@@ -223,7 +215,7 @@ export default {
   },
 
   // ── Experience ─────────────────────────────────────────────────────────────
-  // Shown in this order along the trail (oldest first).
+  // Shown in this order along the trail (oldest first, current role last).
   timeline: [
     {
       kind: 'Education',
@@ -234,7 +226,7 @@ export default {
       tint: 'tintSand',
       points: [
         'Specialisation in Business Analytics. CGPA 8.12 / 10.',
-        'Coursework: machine learning, deep learning, computer vision, NLP, big data analytics, NoSQL databases, statistical analysis.',
+        'Coursework: Machine Learning, Deep Learning, Computer Vision, NLP, Big Data Analytics, NoSQL Databases, Statistical Analysis.',
       ],
       tags: [],
     },
@@ -266,8 +258,20 @@ export default {
       ],
       tags: ['Python', 'SQL (Athena)', 'AWS S3', 'Glue', 'EMR', 'Airflow', 'Git'],
     },
+    // The LAST entry is the star at the summit of the home trail: keep your current role here.
+    {
+      kind: 'Now',
+      title: '[ADD: current role]',
+      org: '[ADD: organisation]',
+      when: '[ADD: start date] – present',
+      where: '',
+      tint: 'accent',
+      points: ['[ADD: one or two lines on what you do in this role]'],
+      tags: [],
+    },
   ],
 
+  // Each block is shown as its own card. Optional per block: tint: 'tintSky' | 'tintMeadow' | 'tintSand' | 'paperDeep'.
   extras: [
     {
       heading: 'Achievements',

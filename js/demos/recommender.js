@@ -30,12 +30,11 @@ export default function mount(el, cfg) {
     return { taste, ratings: FILMS.map(f => Math.max(0, Math.min(1, cos(taste, f[1]) + (r() - 0.5) * 0.25))) };
   });
   el.append(h(`
-    <p class="small" style="margin:0 0 6px">You are a brand-new user with no viewing history. Pick up to three dialogue styles you enjoy:</p>
-    <div class="row" role="group" aria-label="Dialogue styles">${VIBES.map((v, i) => `<button class="chip" type="button" data-i="${i}" aria-pressed="false">${esc(v[0])}</button>`).join('')}</div>
-    <label class="ctl"><span>Content-based</span><input type="range" min="0" max="100" value="50" aria-label="Blend between content-based and collaborative filtering"><span>Collaborative</span></label>
+    <p class="small" style="margin:0 0 6px">Imagine you’ve just signed up and haven’t watched anything yet. Pick up to three kinds of movie moments you enjoy:</p>
+    <div class="row" role="group" aria-label="Movie moments">${VIBES.map((v, i) => `<button class="chip" type="button" data-i="${i}" aria-pressed="false">${esc(v[0])}</button>`).join('')}</div>
+    <label class="ctl"><span>Films like my picks</span><input type="range" min="0" max="100" value="50" aria-label="Lean towards films like my picks, or towards what similar people liked"><span>What similar people liked</span></label>
     <div class="bars" aria-live="polite"></div>
-    <p class="status"></p>
-    <p class="demo-note">${esc(cfg.note || '')}</p>`));
+    <p class="status"></p>`));
   const picked = new Set(), slider = el.querySelector('input'), bars = el.querySelector('.bars'), status = el.querySelector('.status');
 
   function render() {
@@ -43,7 +42,7 @@ export default function mount(el, cfg) {
     let scored;
     if (!picked.size) {
       scored = FILMS.map(f => [f[0], f[2]]);
-      status.textContent = 'Cold start: with no signal, every new user gets the same popularity list.';
+      status.textContent = 'Nothing picked yet, so you get the same popular list as everyone else.';
     } else {
       const me = [0, 0, 0, 0, 0, 0];
       picked.forEach(i => VIBES[i][1].forEach((v, k) => { me[k] += v; }));
@@ -52,10 +51,10 @@ export default function mount(el, cfg) {
         const content = cos(me, f[1]), collab = users.reduce((s, u, k) => s + sims[k] * u.ratings[j], 0) / ss;
         return [f[0], (1 - a) * content + a * collab];
       });
-      status.textContent = `Personalised from the first session: ${Math.round((1 - a) * 100)}% content-based (film features), ${Math.round(a * 100)}% collaborative (users with similar signals).`;
+      status.textContent = 'Now the list is shaped by your picks, before you have watched a single film.';
     }
     scored.sort((x, y) => y[1] - x[1]);
-    bars.innerHTML = scored.slice(0, 5).map(([t, s]) => `<div class="bar"><span>${esc(t)}</span><span><i style="width:${(s * 100).toFixed(1)}%;background:var(--tint-sky)"></i></span><b>${s.toFixed(2)}</b></div>`).join('');
+    bars.innerHTML = scored.slice(0, 5).map(([t, s]) => `<div class="bar"><span>${esc(t)}</span><span><i style="width:${(s * 100).toFixed(1)}%;background:var(--tint-sky)"></i></span><b></b></div>`).join('');
   }
   el.addEventListener('click', e => {
     const c = e.target.closest('.chip'); if (!c) return;

@@ -1,4 +1,4 @@
-// common.js — shared by every page: palette, header/footer, zoom page
+// common.js — shared by every page: theme + palette, header/footer, zoom page
 // transitions, sketch decoration and the companion.
 import C from '../content.js';
 import { decorate, icon } from './sketch.js';
@@ -8,10 +8,32 @@ export const content = C;
 export const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 export { decorate, icon };
 
-// ── palette → CSS variables (content.js is the source of truth) ─────────────
+// ── theme + palette → CSS variables (content.js is the source of truth) ─────
+// The <head> of every page sets data-theme before first paint (saved choice,
+// else the system preference); here the matching palette is applied.
 const kebab = k => k.replace(/[A-Z]/g, m => '-' + m.toLowerCase());
-for (const [k, v] of Object.entries(C.palette || {})) document.documentElement.style.setProperty('--' + kebab(k), v);
-export const tint = name => getComputedStyle(document.documentElement).getPropertyValue('--' + kebab(name)).trim() || '#eee';
+const root = document.documentElement;
+const systemDark = matchMedia('(prefers-color-scheme: dark)');
+const savedTheme = () => { try { const t = localStorage.getItem('theme'); return t === 'dark' || t === 'light' ? t : null; } catch { return null; } };
+export const theme = () => root.dataset.theme || (systemDark.matches ? 'dark' : 'light');
+export function setTheme(t, save = false) {
+  root.dataset.theme = t;
+  if (save) { try { localStorage.setItem('theme', t); } catch {} }
+  const pal = (t === 'dark' && C.paletteDark) || C.palette || {};
+  for (const [k, v] of Object.entries(pal)) root.style.setProperty('--' + kebab(k), v);
+  document.querySelector('meta[name=theme-color]')?.setAttribute('content', pal.paper || '');
+  document.querySelectorAll('button.theme').forEach(b => {
+    b.setAttribute('aria-label', t === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
+    b.setAttribute('aria-pressed', t === 'dark');
+    b.querySelector('.ic')?.remove();
+    b.insertAdjacentHTML('beforeend', icon(t === 'dark' ? 'sun' : 'moon', 20));
+  });
+  dispatchEvent(new CustomEvent('themechange', { detail: t }));
+}
+setTheme(savedTheme() || (systemDark.matches ? 'dark' : 'light'));
+systemDark.addEventListener('change', e => { if (!savedTheme()) setTheme(e.matches ? 'dark' : 'light'); });
+document.addEventListener('click', e => { if (e.target.closest?.('button.theme')) setTheme(theme() === 'dark' ? 'light' : 'dark', true); });
+export const tint = name => getComputedStyle(root).getPropertyValue('--' + kebab(name)).trim() || '#eee';
 
 // ── text helpers ────────────────────────────────────────────────────────────
 export const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -43,10 +65,10 @@ export function zoomTo(href, { x = innerWidth / 2, y = innerHeight / 2, color = 
     document.body.classList.add('leaving-in');
     document.body.style.setProperty('--ox', x + 'px'); document.body.style.setProperty('--oy', y + 'px');
     requestAnimationFrame(() => requestAnimationFrame(() => veil.classList.add('grow')));
-    setTimeout(leave, 520);
+    setTimeout(leave, 780);
   } else {
     document.body.classList.add('leaving-out');
-    setTimeout(leave, 380);
+    setTimeout(leave, 560);
   }
 }
 function arrive() {
@@ -60,7 +82,7 @@ function arrive() {
     veil.style.background = pt.color;
     document.body.append(veil);
     requestAnimationFrame(() => requestAnimationFrame(() => veil.classList.add('gone')));
-    setTimeout(() => veil.remove(), 700);
+    setTimeout(() => veil.remove(), 900);
   }
 }
 // Back/forward cache: never show a page frozen mid-transition.
@@ -77,17 +99,25 @@ document.addEventListener('click', e => {
   zoomTo(a.getAttribute('href'), { x: b.left + b.width / 2, y: b.top + b.height / 2, color: a.dataset.tint ? `var(--${kebab(a.dataset.tint)})` : undefined, dir: a.dataset.zoom || 'in' });
 });
 
-// ── header / footer for the inner pages ─────────────────────────────────────
+// ── header / footer ─────────────────────────────────────────────────────────
+// Top right on every page: [theme toggle] Name. The name goes to the final home screen.
 function shell(page) {
   const head = document.querySelector('header.site');
   if (head) {
-    head.innerHTML = `
+    const home = page === 'index';
+    const me = `<div class="me">
+        <button class="theme" type="button"></button>
+        <a class="name" href="index.html#home"${home ? '' : ' data-zoom="out"'}>${esc(C.person.name)}</a>
+      </div>`;
+    head.innerHTML = home ? me : `
       <a class="back" href="index.html#home" data-zoom="out" aria-label="Back to home">
         <span class="back-ic" data-sketch="circle" data-fill="tintSand">${icon('arrowLeft', 18)}</span><span class="back-t">home</span>
       </a>
       <nav aria-label="Main"><ul>
         ${C.nav.map(n => `<li><a href="${esc(n.href)}"${n.href.startsWith(page) ? ' aria-current="page" data-sketch="underline"' : ''}>${esc(n.label)}</a></li>`).join('')}
-      </ul></nav>`;
+      </ul></nav>
+      ${me}`;
+    setTheme(theme());      // fills in the toggle icon and label
   }
   const foot = document.querySelector('footer.site');
   if (foot) {
@@ -102,6 +132,6 @@ export function initPage(page = '') {
   arrive();
   decorate();
   const companion = initCompanion();
-  document.documentElement.classList.add('js');
+  root.classList.add('js');
   return companion;
 }

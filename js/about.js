@@ -24,7 +24,5 @@ $('#beyond').innerHTML = C.beyond.map((c, i) => {
 }).join('');
 decorate();
 
-// the companion packs a rucksack here, and hops when you point at a card
-companion.accessory('pack');
-document.querySelectorAll('.card').forEach(c => c.addEventListener('pointerenter', () => companion.hop()));
+companion.accessory('pack');   // it carries a rucksack on this page
 if (location.hash === '#contact') $('#contact').scrollIntoView();

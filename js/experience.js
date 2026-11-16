@@ -1,16 +1,16 @@
 // experience.js — a winding hand-drawn trail of roles and education.
 // The text is ordinary flowing HTML; the path and circles are measured from it
-// and drawn behind. The companion walks the trail as the page scrolls.
+// and drawn behind. The line draws itself in as the page scrolls.
 import { content as C, initPage, txt, esc, tags, decorate, icon, reduced } from './common.js';
 
-const companion = initPage('experience');
+initPage('experience');
 const $ = s => document.querySelector(s);
 const trail = $('#trail'), list = $('#stops');
 const cvBtn = `<a class="btn" href="${esc(C.person.cv)}" download data-sketch="rect" data-fill="tintSky">${icon('download', 18)} Download CV (PDF)</a>`;
 $('#cv-top').innerHTML = cvBtn; $('#cv-bottom').innerHTML = cvBtn;
 
-list.innerHTML = C.timeline.map(s => `
-  <li class="stop">
+list.innerHTML = C.timeline.map((s, i) => `
+  <li class="stop" id="stop-${i}">
     <span class="kind">${txt(s.kind)}</span>
     <h2>${txt(s.title)}</h2>
     <p class="org">${txt(s.org)}</p>
@@ -18,8 +18,14 @@ list.innerHTML = C.timeline.map(s => `
     <ul class="pts">${s.points.map(p => `<li>${txt(p)}</li>`).join('')}</ul>
     ${tags(s.tags)}
   </li>`).join('');
-$('#extras').innerHTML = C.extras.map(g => `<div><h3>${esc(g.heading)}</h3>${g.items.map(i => `
-  <div class="it"><strong>${txt(i.title)}</strong><span class="small muted">${txt(i.meta)}</span>${i.text ? `<p>${txt(i.text)}</p>` : ''}</div>`).join('')}</div>`).join('');
+
+// Achievements, Leadership, Volunteering, Certifications…: one card each, each in its own tint
+const CARD_TINTS = ['tintSand', 'tintSky', 'tintMeadow', 'paperDeep'];
+$('#extras').innerHTML = C.extras.map((g, n) => `
+  <div class="xcard" data-sketch="rect" data-fill="${esc(g.tint || CARD_TINTS[n % CARD_TINTS.length])}" data-seed="${70 + n * 4}">
+    <h3>${esc(g.heading)}</h3>${g.items.map(i => `
+    <div class="it"><strong>${txt(i.title)}</strong><span class="small muted">${txt(i.meta)}</span>${i.text ? `<p>${txt(i.text)}</p>` : ''}</div>`).join('')}
+  </div>`).join('');
 decorate();
 
 // ── draw the trail ──────────────────────────────────────────────────────────
@@ -63,31 +69,26 @@ function build() {
     </filter></defs>
     <g filter="url(#wob)"><path class="t-line" pathLength="1" d="${d}"/>${circles}</g>`;
   pathEl = svg.querySelector('.t-line'); len = pathEl.getTotalLength();
-  setDrawn(reduced.matches ? 1 : drawn, true);
+  onScroll();
 }
-function setDrawn(v, force) {
-  if (v <= drawn && !force) return;
-  drawn = Math.max(drawn, v);
-  if (pathEl) pathEl.style.strokeDashoffset = 1 - drawn;
-}
-// y increases monotonically along the path, so a binary search finds the point at a given height
-function pointAtY(y) {
+// y increases monotonically along the path, so a binary search finds the length at a given height
+function lengthAtY(y) {
   let lo = 0, hi = len;
   for (let i = 0; i < 18; i++) { const mid = (lo + hi) / 2; if (pathEl.getPointAtLength(mid).y < y) lo = mid; else hi = mid; }
-  return { l: hi, p: pathEl.getPointAtLength(hi) };
+  return hi;
 }
+// the line is drawn as far as the reader has scrolled (it never un-draws); CSS eases each step
+function onScroll() {
+  if (!pathEl) return;
+  const y = clamp(innerHeight * 0.7 - trail.getBoundingClientRect().top, 0, H);
+  drawn = reduced.matches ? 1 : Math.max(drawn, Math.min(1, lengthAtY(y) / len + 0.02));
+  pathEl.style.strokeDashoffset = 1 - drawn;
+}
+let ticking = false;
+addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(() => { ticking = false; onScroll(); }); } }, { passive: true });
 
 build();
 new ResizeObserver(build).observe(trail);
 document.fonts?.ready.then(build);
-
-// the companion walks the trail while it is on screen, otherwise it is free
-let cache = { y: -1, out: null };
-companion.park(() => {
-  if (!pathEl) return null;
-  const r = trail.getBoundingClientRect();
-  if (r.bottom < 120 || r.top > innerHeight - 120) return null;
-  const y = clamp(innerHeight * 0.55 - r.top, 0, H);
-  if (Math.abs(y - cache.y) > 0.5) { const q = pointAtY(y); cache = { y, out: q }; setDrawn(Math.min(1, q.l / len + 0.03)); }
-  return { x: r.left + cache.out.p.x, y: r.top + cache.out.p.y + 2, speed: 700 };
-});
+// deep links from the home trail markers (#stop-0, #stop-1, …)
+if (/^#stop-\d+$/.test(location.hash)) document.querySelector(location.hash)?.scrollIntoView({ behavior: 'instant', block: 'center' });
