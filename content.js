@@ -26,17 +26,17 @@ export default {
     ink: '#353222',
     inkSoft: '#676351',
   },
-  // Dark theme: the same hues, as muted dark tints on a deep warm background, with light ink.
+  // Dark theme: deep blue background, muted blue-toned tints, light ink.
   paletteDark: {
-    paper: '#1e1b15',
-    paperDeep: '#26221a',
-    tintSky: '#2b3642',
-    tintMeadow: '#30372a',
-    tintSand: '#3a3425',
-    accent: '#46597a',
-    accentInk: '#a9c0de',
-    ink: '#ece7d8',
-    inkSoft: '#b5af9c',
+    paper: '#121a27',
+    paperDeep: '#182231',
+    tintSky: '#22344e',
+    tintMeadow: '#21393c',
+    tintSand: '#2e3348',
+    accent: '#3d5682',
+    accentInk: '#a9c5ec',
+    ink: '#e6ebf3',
+    inkSoft: '#a8b2c5',
   },
 
   person: {

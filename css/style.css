@@ -286,10 +286,10 @@ table.exp td { padding: 9px 10px 9px 0; border-bottom: 1px dashed color-mix(in s
 /* Dark theme fallback (content.js → paletteDark overrides at load, like the light palette). */
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --paper: #1e1b15; --paper-deep: #26221a;
-  --tint-sky: #2b3642; --tint-meadow: #30372a; --tint-sand: #3a3425;
-  --accent: #46597a; --accent-ink: #a9c0de;
-  --ink: #ece7d8; --ink-soft: #b5af9c;
+  --paper: #121a27; --paper-deep: #182231;
+  --tint-sky: #22344e; --tint-meadow: #21393c; --tint-sand: #2e3348;
+  --accent: #3d5682; --accent-ink: #a9c5ec;
+  --ink: #e6ebf3; --ink-soft: #a8b2c5;
 }
 :root[data-theme="dark"] .portrait img, :root[data-theme="dark"] .gallery img { filter: saturate(.78) brightness(.86); }
 html, body { transition: background-color .3s ease, color .3s ease; }
